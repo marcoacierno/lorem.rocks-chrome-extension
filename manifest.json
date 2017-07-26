@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+
+  "name": "Lorem rocks Extension",
+  "description": "Fills current input with a random generated text",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+      {
+          "matches": ["<all_urls>"],
+          "js": ["content.js"]
+      }
+  ],
+
+  "permissions": [
+    "activeTab",
+    "storage"
+  ]
+}
