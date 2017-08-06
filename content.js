@@ -1,34 +1,58 @@
 console.log('content script');
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('content script: ', request);
+    const activeElement = document.activeElement;
+    const tagName = activeElement.tagName.toLowerCase();
+
     switch (request.action) {
-        case 'inject_text':
-            const heading = request.data.heading;
-            const paragraph = request.data.paragraph;
+    case 'inject_paragraph':
+        setText(
+            activeElement,
+            request.data.paragraph,
+        );
+        sendResponse('paragraph');
+        break;
+    case 'inject_heading':
+        setText(
+            activeElement,
+            request.data.heading,
+        );
+        sendResponse('heading');
+        break;
+    case 'inject_text':
+        const heading = request.data.heading;
+        const paragraph = request.data.paragraph;
+        const textType = inputToTextType(tagName);
 
-            const activeElement = document.activeElement;
-            const tagName = activeElement.tagName.toLowerCase();
+        setText(
+            activeElement,
+            textType === 'paragraph' ? paragraph : heading
+        );
 
-            console.log('active tag', tagName);
-
-            switch (tagName) {
-                case 'textarea':
-                    activeElement.value += paragraph;
-                    sendResponse('paragraph');
-                    break;
-                case 'input':
-                    activeElement.value += heading;
-                    sendResponse('heading');
-                    break;
-                case 'iframe':
-                    activeElement.contentDocument.body.innerText += paragraph;
-                    sendResponse('paragraph');
-                    break;
-                default:
-                    break;
-            }
-
-            console.log('change value');
-            break;
+        sendResponse(textType);
+        break;
     }
 });
+
+function setText(to, text) {
+    switch (to.tagName.toLowerCase()) {
+    case 'textarea':
+    case 'input':
+        to.value += text;
+        break;
+    case 'iframe':
+        to.contentDocument.body.innerText += text;
+        break;
+    }
+}
+
+function inputToTextType(tagName) {
+    switch (tagName) {
+    case 'textarea':
+    case 'iframe':
+        return 'paragraph';
+    case 'input':
+        return 'heading';
+    default:
+        return null;
+    }
+}

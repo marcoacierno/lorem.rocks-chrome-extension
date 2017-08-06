@@ -16,8 +16,33 @@
       }
   ],
 
+  "commands": {
+    "insert-heading": {
+      "suggested_key": {
+          "default": "Ctrl+H",
+          "mac": "MacCtrl+H"
+      },
+      "description": "Inserts heading"
+    },
+    "insert-paragraph": {
+      "suggested_key": {
+          "default": "Ctrl+P",
+          "mac": "MacCtrl+P"
+      },
+      "description": "Inserts paragraph"
+    },
+    "fill": {
+      "suggested_key": {
+          "default": "Ctrl+F",
+          "mac": "MacCtrl+F"
+      },
+      "description": "Fill input"
+    }
+  },
+
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": true
   },
 
   "permissions": [
