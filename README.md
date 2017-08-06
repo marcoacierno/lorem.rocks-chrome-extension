@@ -1,8 +1,9 @@
 # lorem.rocks chrome extension
 
 This extensions allows you to insert dummy text, taken from [lorem.rocks](https://lorem.rocks) in the active input. If the active input is an input dom element,
-it will insert a `heading`. If the current active input is a textarea or an iframe (tbd, integrate with tinymce)
-it will insert a `paragraph`.
+it will insert a `heading`. If the current active input is a textarea or an iframe (tbd, integrate with tinymce) it will insert a `paragraph`.
+
+Still a work in progress.
 
 ## How to use
 
