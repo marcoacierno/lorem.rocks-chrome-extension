@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
 
-  "name": "Lorem rocks Extension",
+  "name": "lorem.rocks Extension",
   "description": "Fills current input with a random generated text",
   "version": "1.0",
 
