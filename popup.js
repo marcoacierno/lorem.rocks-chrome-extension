@@ -28,6 +28,8 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 function setupDictionaries(dictionaries, active) {
+    dictionarySelect.innerHTML = '';
+
     dictionaries.forEach(dictionary => {
         const option = document.createElement('option');
         option.value = dictionary.slug;
