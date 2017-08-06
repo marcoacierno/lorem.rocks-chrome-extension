@@ -47,11 +47,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 const prepareInitialValues = dictionaries => {
     dictionaries.forEach(dictionary => {
-        fetchWords('paragraph', dictionary.slug)
-            .then(t => paragraph[dictionary.slug] = t);
+        const slug = dictionary.slug;
 
-        fetchWords('heading', dictionary.slug)
-            .then(t => heading[dictionary.slug] = t);
+        fetchWords('paragraph', slug);
+        fetchWords('heading', slug);
     });
 }
 
@@ -67,15 +66,49 @@ const fetchWords = (what, dictionary) => {
     switch (what) {
     case 'paragraph':
         finalUrl = `${BASE_URL}paragraph/`;
+
+        if (paragraph[dictionary] && paragraph[dictionary].isUpdating) {
+            return null;
+        }
+
+        paragraph[dictionary] = {
+            isUpdating: true,
+            text: paragraph[dictionary] && paragraph[dictionary].text || '',
+        };
         break;
     case 'heading':
         finalUrl = `${BASE_URL}heading/`;
+
+        if (heading[dictionary] && heading[dictionary].isUpdating) {
+            return null;
+        }
+
+        heading[dictionary] = {
+            isUpdating: true,
+            text: heading[dictionary] && heading[dictionary].text || '',
+        };
         break;
     }
 
     return fetch(finalUrl)
                 .then(res => res.json())
-                .then(res => Promise.resolve(res.text));
+                .then(res => Promise.resolve(res.text))
+                .then(text => {
+                    switch (what) {
+                    case 'paragraph':
+                        paragraph[dictionary] = {
+                            isUpdating: false,
+                            text,
+                        }
+                        break;
+                    case 'heading':
+                        heading[dictionary] = {
+                            isUpdating: false,
+                            text,
+                        }
+                        break;
+                    }
+                });
 };
 
 function sendInjectText(dictionary, force=false) {
@@ -96,20 +129,16 @@ function sendInjectText(dictionary, force=false) {
         chrome.tabs.sendMessage(tabs[0].id, {
             action,
             data: {
-                heading: heading[dictionary],
-                paragraph: paragraph[dictionary],
+                heading: heading[dictionary].text,
+                paragraph: paragraph[dictionary].text,
             },
         }, typeUsed => {
-            console.log('answer', typeUsed);
-
             switch (typeUsed) {
             case 'heading':
-                fetchWords('heading', dictionary)
-                    .then(t => heading[dictionary] = t);
+                fetchWords('heading', dictionary);
                 break;
             case 'paragraph':
-                fetchWords('paragraph', dictionary)
-                    .then(t => paragraph[dictionary] = t);
+                fetchWords('paragraph', dictionary);
                 break;
             }
         });
