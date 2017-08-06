@@ -1,11 +1,38 @@
-console.log('hello from background');
+let paragraph = {};
+let heading = {};
 let currentDictionary = null;
 
-chrome.storage.local.get('dictionary', items => {
+// chrome.storage.local.clear();
+
+chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
     currentDictionary = items.dictionary;
+
+    if (!items.dictionaries) {
+        fetchDictionaries()
+            .then(apiDictionaries => {
+                //
+                const dictionaries = apiDictionaries.map(dictionary => ({
+                    slug: dictionary.slug,
+                    name: dictionary.name,
+                }));
+
+                if (!currentDictionary) {
+                    currentDictionary = apiDictionaries[0].slug;
+                }
+
+                chrome.storage.local.set({
+                    dictionaries,
+                    dictionary: currentDictionary,
+                });
+
+                prepareInitialValues(dictionaries);
+            });
+    } else {
+        prepareInitialValues(items.dictionaries);
+    }
 });
 
-chrome.storage.onChanged.addListener(function(changes, namespace) {
+chrome.storage.onChanged.addListener((changes, namespace) => {
     for (const key in changes) {
         const change = changes[key];
 
@@ -17,6 +44,21 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     }
 });
 
+
+const prepareInitialValues = dictionaries => {
+    dictionaries.forEach(dictionary => {
+        fetchWords('paragraph', dictionary.slug)
+            .then(t => paragraph[dictionary.slug] = t);
+
+        fetchWords('heading', dictionary.slug)
+            .then(t => heading[dictionary.slug] = t);
+    });
+}
+
+const fetchDictionaries = () => {
+    return fetch('https://api.lorem.rocks/dictionaries/')
+        .then(res => res.json());
+};
 
 const fetchWords = (what, dictionary) => {
     const BASE_URL = `https://api.lorem.rocks/dictionaries/${dictionary}/`;
@@ -35,22 +77,6 @@ const fetchWords = (what, dictionary) => {
                 .then(res => res.json())
                 .then(res => Promise.resolve(res.text));
 };
-
-let paragraph = {};
-let heading = {};
-
-fetchWords('paragraph', 'ipsum')
-    .then(t => paragraph['ipsum'] = t);
-
-fetchWords('heading', 'ipsum')
-    .then(t => heading['ipsum'] = t);
-
-fetchWords('paragraph', 'macaroni')
-    .then(t => paragraph['macaroni'] = t);
-
-fetchWords('heading', 'macaroni')
-    .then(t => heading['macaroni'] = t);
-
 
 function sendInjectText(dictionary, force=false) {
     let action;
@@ -88,10 +114,6 @@ function sendInjectText(dictionary, force=false) {
             }
         });
     });
-
-    if (!force) {
-
-    }
 }
 
 
