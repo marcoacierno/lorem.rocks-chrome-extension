@@ -1,5 +1,7 @@
-let paragraph = {};
-let heading = {};
+const loremRocks = {
+    heading: {},
+    paragraph: {},
+};
 let currentDictionary = null;
 
 // chrome.storage.local.clear();
@@ -63,30 +65,21 @@ const fetchWords = (what, dictionary) => {
     const BASE_URL = `https://api.lorem.rocks/dictionaries/${dictionary}/`;
     let finalUrl = '';
 
+    if (loremRocks[what][dictionary] && loremRocks[what][dictionary].isUpdating) {
+        return null;
+    }
+
+    loremRocks[what][dictionary] = {
+        isUpdating: true,
+        text: loremRocks[what][dictionary] && loremRocks[what][dictionary].text || '',
+    };
+
     switch (what) {
     case 'paragraph':
         finalUrl = `${BASE_URL}paragraph/`;
-
-        if (paragraph[dictionary] && paragraph[dictionary].isUpdating) {
-            return null;
-        }
-
-        paragraph[dictionary] = {
-            isUpdating: true,
-            text: paragraph[dictionary] && paragraph[dictionary].text || '',
-        };
         break;
     case 'heading':
         finalUrl = `${BASE_URL}heading/`;
-
-        if (heading[dictionary] && heading[dictionary].isUpdating) {
-            return null;
-        }
-
-        heading[dictionary] = {
-            isUpdating: true,
-            text: heading[dictionary] && heading[dictionary].text || '',
-        };
         break;
     }
 
@@ -94,20 +87,10 @@ const fetchWords = (what, dictionary) => {
                 .then(res => res.json())
                 .then(res => Promise.resolve(res.text))
                 .then(text => {
-                    switch (what) {
-                    case 'paragraph':
-                        paragraph[dictionary] = {
-                            isUpdating: false,
-                            text,
-                        }
-                        break;
-                    case 'heading':
-                        heading[dictionary] = {
-                            isUpdating: false,
-                            text,
-                        }
-                        break;
-                    }
+                    loremRocks[what][dictionary] = {
+                        isUpdating: false,
+                        text,
+                    };
                 });
 };
 
@@ -129,8 +112,8 @@ function sendInjectText(dictionary, force=false) {
         chrome.tabs.sendMessage(tabs[0].id, {
             action,
             data: {
-                heading: heading[dictionary].text,
-                paragraph: paragraph[dictionary].text,
+                heading: loremRocks['heading'][dictionary].text,
+                paragraph: loremRocks['paragraph'][dictionary].text,
             },
         }, typeUsed => {
             switch (typeUsed) {
