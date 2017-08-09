@@ -2,11 +2,12 @@
   "manifest_version": 2,
 
   "name": "lorem.rocks Extension",
-  "description": "Fills current input with a random generated text",
-  "version": "1.0",
+  "description": "Fills current input with a random generated text taken from lorem.rocks",
+  "version": "0.1",
 
   "browser_action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "Fill input with lorem.rocks"
   },
 
   "content_scripts": [
@@ -43,6 +44,11 @@
   "background": {
     "scripts": ["background.js"],
     "persistent": true
+  },
+
+  "icons": {
+    "16": "icons/16x16.jpg",
+    "32": "icons/32x32.png"
   },
 
   "permissions": [
