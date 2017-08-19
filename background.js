@@ -5,8 +5,6 @@ const loremRocks = {
 };
 let currentDictionary = null;
 
-// chrome.storage.local.clear();
-
 chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
     currentDictionary = items.dictionary;
 
@@ -42,7 +40,6 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
                             return;
                         }
 
-                        console.log('loremRocks', loremRocks);
                         loremRocks.icon[dictionary.slug] = {
                             data: imageData.data,
                             width: imageData.width,
@@ -73,8 +70,6 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
                 `favicon_${dictionarySlug}_width`
             ], items => {
                 const faviconImageData = items[`favicon_${dictionarySlug}_data`];
-                console.log('restored image data', faviconImageData);
-                console.log('restored image data', JSON.parse(faviconImageData));
 
                 const parsedStoredImageData = JSON.parse(faviconImageData);
                 const imageData = new Uint8ClampedArray(
