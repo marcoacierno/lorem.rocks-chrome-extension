@@ -1,0 +1,10 @@
+language: node_js
+before_install:
+    -
+script:
+    -
+deploy:
+    provider: script
+    script: sh ./deploy.sh
+    on:
+        branch: master
