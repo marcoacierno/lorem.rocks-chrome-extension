@@ -1,6 +1,7 @@
 const loremRocks = {
     heading: {},
     paragraph: {},
+    icon: {},
 };
 let currentDictionary = null;
 
@@ -12,7 +13,6 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
     if (!items.dictionaries) {
         fetchDictionaries()
             .then(apiDictionaries => {
-                //
                 const dictionaries = apiDictionaries.map(dictionary => ({
                     slug: dictionary.slug,
                     name: dictionary.name,
@@ -27,10 +27,71 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
                     dictionary: currentDictionary,
                 });
 
+                dictionaries.forEach(dictionary => {
+                    const canvas = document.createElement('canvas');
+                    canvas.style.position = 'absolute';
+                    canvas.style.top = '-99999999px';
+                    const img = new Image();
+                    img.onload = function() {
+                        const context = canvas.getContext('2d');
+                        context.drawImage(this, 0, 0);
+                        const imageData = context.getImageData(0, 0, img.width, img.height);
+
+                        if (!imageData) {
+                            console.error('invalid imageData');
+                            return;
+                        }
+
+                        console.log('loremRocks', loremRocks);
+                        loremRocks.icon[dictionary.slug] = {
+                            data: imageData.data,
+                            width: imageData.width,
+                            height: imageData.height,
+                        };
+
+                        chrome.storage.local.set({
+                            [`favicon_${dictionary.slug}_data`]: JSON.stringify(imageData.data),
+                            [`favicon_${dictionary.slug}_width`]: imageData.width,
+                            [`favicon_${dictionary.slug}_height`]: imageData.height,
+                        });
+                    };
+
+                    img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon`;
+                });
+
                 prepareInitialValues(dictionaries);
             });
     } else {
         prepareInitialValues(items.dictionaries);
+
+        items.dictionaries.forEach(dictionary => {
+            const dictionarySlug = dictionary.slug;
+
+            chrome.storage.local.get([
+                `favicon_${dictionarySlug}_data`,
+                `favicon_${dictionarySlug}_height`,
+                `favicon_${dictionarySlug}_width`
+            ], items => {
+                const faviconImageData = items[`favicon_${dictionarySlug}_data`];
+                console.log('restored image data', faviconImageData);
+                console.log('restored image data', JSON.parse(faviconImageData));
+
+                const parsedStoredImageData = JSON.parse(faviconImageData);
+                const imageData = new Uint8ClampedArray(
+                    Object.keys(parsedStoredImageData).map(k => parsedStoredImageData[k])
+                );
+
+                loremRocks.icon[dictionarySlug] = {
+                    data: imageData,
+                    width: items[`favicon_${dictionarySlug}_width`],
+                    height: items[`favicon_${dictionarySlug}_height`],
+                };
+
+                if (dictionarySlug === currentDictionary) {
+                    chrome.browserAction.setIcon({ imageData: loremRocks.icon[currentDictionary] });
+                }
+            })
+        });
     }
 });
 
@@ -43,6 +104,8 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         }
 
         currentDictionary = change.newValue;
+        console.log('lorem rocks', loremRocks, 'currentDictionary', currentDictionary);
+        chrome.browserAction.setIcon({ imageData: loremRocks.icon[currentDictionary] });
     }
 });
 
