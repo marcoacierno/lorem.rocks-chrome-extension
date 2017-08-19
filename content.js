@@ -39,16 +39,16 @@ function setText(to, text) {
     case 'input':
         to.value += text;
         break;
-    case 'iframe':
-        to.contentDocument.body.innerText += text;
-        break;
+    // case 'iframe':
+    //     to.contentDocument.body.innerText += text;
+    //     break;
     }
 }
 
 function inputToTextType(tagName) {
     switch (tagName) {
     case 'textarea':
-    case 'iframe':
+    // case 'iframe':
         return 'paragraph';
     case 'input':
         return 'heading';
