@@ -119,15 +119,22 @@ const fetchDictionaries = () => {
         .then(res => res.json());
 };
 
-const fetchWords = (what, dictionary) => {
+const fetchWords = (what, dictionary, isRetrying = false) => {
     const BASE_URL = `https://api.lorem.rocks/dictionaries/${dictionary}/`;
     let finalUrl = '';
+
+    if (isRetrying && loremRocks[what][dictionary].updateFails > 3) {
+        console.warn(`Unable to update ${dictionary}/${what} word.`);
+        loremRocks[what][dictionary].updateFails = 0;
+        return;
+    }
 
     if (loremRocks[what][dictionary] && loremRocks[what][dictionary].isUpdating) {
         return null;
     }
 
     loremRocks[what][dictionary] = {
+        ...loremRocks[what][dictionary],
         isUpdating: true,
         text: loremRocks[what][dictionary] && loremRocks[what][dictionary].text || '',
     };
@@ -141,14 +148,35 @@ const fetchWords = (what, dictionary) => {
         break;
     }
 
+    console.info(`Trying ${dictionary}/${what}`);
+
     return fetch(finalUrl)
                 .then(res => res.json())
                 .then(res => Promise.resolve(res.text))
                 .then(text => {
                     loremRocks[what][dictionary] = {
+                        ...loremRocks[what][dictionary],
+                        updateFails: 0,
                         isUpdating: false,
                         text,
                     };
+                })
+                .catch(e => {
+                    console.error(`Fetch for ${dictionary}/${what} failed (${loremRocks[what][dictionary].updateFails}). Trying again...`);
+
+                    loremRocks[what][dictionary] = {
+                        ...loremRocks[what][dictionary],
+                        updateFails: (loremRocks[what][dictionary].updateFails || 1) + 1,
+                        isUpdating: false,
+                    };
+
+                    if (loremRocks[what][dictionary].updateFails > 3) {
+                        console.warn(`Unable to update ${dictionary}/${what} word.`);
+                        loremRocks[what][dictionary].updateFails = 0;
+                        return;
+                    }
+
+                    setTimeout(() => fetchWords(what, dictionary, true), loremRocks[what][dictionary].updateFails * 10000);
                 });
 };
 
