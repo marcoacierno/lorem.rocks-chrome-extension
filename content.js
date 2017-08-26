@@ -39,16 +39,32 @@ function setText(to, text) {
     case 'input':
         to.value += text;
         break;
-    // case 'iframe':
-    //     to.contentDocument.body.innerText += text;
-    //     break;
+    case 'iframe':
+        const oldScriptTag = document.querySelector('#loremrocks-inject');
+
+        if (oldScriptTag !== null) {
+            oldScriptTag.parentNode.removeChild(oldScriptTag);
+        }
+
+        const script = document.createElement('script');
+        script.id = 'loremrocks-inject';
+        const injectTextCode = `
+            loremRocksFocusedEditor = tinymce.focusedEditor;
+
+            if (loremRocksFocusedEditor !== null) {
+                loremRocksFocusedEditor.insertContent("${text}");
+            }
+        `;
+        script.appendChild(document.createTextNode(injectTextCode));
+        document.body.appendChild(script);
+        break;
     }
 }
 
 function inputToTextType(tagName) {
     switch (tagName) {
     case 'textarea':
-    // case 'iframe':
+    case 'iframe':
         return 'paragraph';
     case 'input':
         return 'heading';
