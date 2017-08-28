@@ -20,6 +20,8 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
                     currentDictionary = apiDictionaries[0].slug;
                 }
 
+                fetchInitialValues(dictionary.slug);
+
                 chrome.storage.local.set({
                     dictionaries,
                     dictionary: currentDictionary,
@@ -55,20 +57,30 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
 
                     img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon`;
                 });
-
-                prepareInitialValues(dictionaries);
             });
     } else {
-        prepareInitialValues(items.dictionaries);
-
         items.dictionaries.forEach(dictionary => {
             const dictionarySlug = dictionary.slug;
 
             chrome.storage.local.get([
                 `favicon_${dictionarySlug}_data`,
                 `favicon_${dictionarySlug}_height`,
-                `favicon_${dictionarySlug}_width`
+                `favicon_${dictionarySlug}_width`,
+                `heading_${dictionarySlug}`,
+                `paragraph_${dictionarySlug}`,
             ], items => {
+                const dictHeading = items[`heading_${dictionarySlug}`];
+                const dictParagraph = items[`paragraph_${dictionarySlug}`];
+
+                loremRocks.heading[dictionarySlug] = {
+                    text: dictHeading,
+                };
+                loremRocks.paragraph[dictionarySlug] = {
+                    text: dictParagraph,
+                };
+
+                fetchInitialValues(dictionarySlug);
+
                 const faviconImageData = items[`favicon_${dictionarySlug}_data`];
 
                 const parsedStoredImageData = JSON.parse(faviconImageData);
@@ -105,13 +117,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 
-const prepareInitialValues = dictionaries => {
-    dictionaries.forEach(dictionary => {
-        const slug = dictionary.slug;
+const fetchInitialValues = dictionary => {
+    fetchWords('paragraph', dictionary)
+        .then(t => chrome.storage.local.set({ [`paragraph_${dictionary}`]: t }));
 
-        fetchWords('paragraph', slug);
-        fetchWords('heading', slug);
-    });
+    fetchWords('heading', dictionary)
+        .then(t => chrome.storage.local.set({ [`heading_${dictionary}`]: t }));
 }
 
 const fetchDictionaries = () => {
@@ -160,6 +171,7 @@ const fetchWords = (what, dictionary, isRetrying = false) => {
                         isUpdating: false,
                         text,
                     };
+                    return text;
                 })
                 .catch(e => {
                     console.error(`Fetch for ${dictionary}/${what} failed (${loremRocks[what][dictionary].updateFails}). Trying again...`);
