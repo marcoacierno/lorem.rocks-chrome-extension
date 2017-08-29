@@ -99,7 +99,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         }
 
         currentDictionary = change.newValue;
-        console.log('lorem rocks', loremRocks, 'currentDictionary', currentDictionary);
+
         chrome.browserAction.setIcon({ imageData: loremRocks.icon[currentDictionary] });
     }
 });
@@ -216,15 +216,12 @@ function sendInjectText(dictionary, force=false) {
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message, sender, sendResponse);
-
     if (message.action === 'popup_open') {
         sendInjectText(currentDictionary);
     }
 });
 
 chrome.commands.onCommand.addListener(command => {
-    console.log('Command:', command);
     switch (command) {
     case 'insert-heading':
         sendInjectText(currentDictionary, 'heading');
