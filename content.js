@@ -1,4 +1,3 @@
-console.log('content script');
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const activeElement = document.activeElement;
     const tagName = activeElement.tagName.toLowerCase();

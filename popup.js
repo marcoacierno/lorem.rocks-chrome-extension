@@ -1,8 +1,6 @@
 const dictionarySelect = document.querySelector('#dictionary');
 
 dictionarySelect.addEventListener('change', e => {
-    console.log('change value to', e);
-
     const dictionary = dictionarySelect.value;
     chrome.storage.local.set({ dictionary });
 });
