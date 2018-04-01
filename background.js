@@ -103,7 +103,7 @@ const updateLocalDictionaries = (currentDictionary, originalDictionaries, apiDic
             });
         };
 
-        img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon`;
+        img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon/`;
 
         if (originalDictionaries.filter(dict => dict.slug === dictionary.slug).length === 0) {
             newDictionary = true;
