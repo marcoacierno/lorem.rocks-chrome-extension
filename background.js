@@ -9,55 +9,7 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
     currentDictionary = items.dictionary;
 
     if (!items.dictionaries) {
-        fetchDictionaries()
-            .then(apiDictionaries => {
-                const dictionaries = apiDictionaries.map(dictionary => ({
-                    slug: dictionary.slug,
-                    name: dictionary.name,
-                }));
-
-                if (!currentDictionary) {
-                    currentDictionary = apiDictionaries[0].slug;
-                }
-
-                chrome.storage.local.set({
-                    dictionaries,
-                    dictionary: currentDictionary,
-                });
-
-                dictionaries.forEach(dictionary => {
-                    const canvas = document.createElement('canvas');
-                    canvas.style.position = 'absolute';
-                    canvas.style.top = '-99999999px';
-                    const img = new Image();
-                    img.onload = function() {
-                        const context = canvas.getContext('2d');
-                        context.drawImage(this, 0, 0);
-                        const imageData = context.getImageData(0, 0, img.width, img.height);
-
-                        if (!imageData) {
-                            console.error('invalid imageData');
-                            return;
-                        }
-
-                        loremRocks.icon[dictionary.slug] = {
-                            data: imageData.data,
-                            width: imageData.width,
-                            height: imageData.height,
-                        };
-
-                        chrome.storage.local.set({
-                            [`favicon_${dictionary.slug}_data`]: JSON.stringify(imageData.data),
-                            [`favicon_${dictionary.slug}_width`]: imageData.width,
-                            [`favicon_${dictionary.slug}_height`]: imageData.height,
-                        });
-                    };
-
-                    img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon`;
-                });
-
-                prepareInitialValues(dictionaries);
-            });
+        fetchDictionaries().then(updateLocalDictionaries.bind(this, currentDictionary, null));
     } else {
         prepareInitialValues(items.dictionaries);
 
@@ -85,8 +37,10 @@ chrome.storage.local.get(['dictionary', 'dictionaries'], items => {
                 if (dictionarySlug === currentDictionary) {
                     chrome.browserAction.setIcon({ imageData: loremRocks.icon[currentDictionary] });
                 }
-            })
+            });
         });
+
+        fetchDictionaries().then(updateLocalDictionaries.bind(this, currentDictionary, items.dictionaries));
     }
 });
 
@@ -104,6 +58,62 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
 });
 
+const updateLocalDictionaries = (currentDictionary, originalDictionaries, apiDictionaries) => {
+    const dictionaries = apiDictionaries.map(dictionary => ({
+        slug: dictionary.slug,
+        name: dictionary.name,
+    }));
+
+    if (!currentDictionary) {
+        currentDictionary = apiDictionaries[0].slug;
+    }
+
+    chrome.storage.local.set({
+        dictionaries,
+        dictionary: currentDictionary,
+    });
+
+    let newDictionary = false;
+
+    dictionaries.forEach(dictionary => {
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'absolute';
+        canvas.style.top = '-99999999px';
+        const img = new Image();
+        img.onload = function() {
+            const context = canvas.getContext('2d');
+            context.drawImage(this, 0, 0);
+            const imageData = context.getImageData(0, 0, img.width, img.height);
+
+            if (!imageData) {
+                console.error('invalid imageData');
+                return;
+            }
+
+            loremRocks.icon[dictionary.slug] = {
+                data: imageData.data,
+                width: imageData.width,
+                height: imageData.height,
+            };
+
+            chrome.storage.local.set({
+                [`favicon_${dictionary.slug}_data`]: JSON.stringify(imageData.data),
+                [`favicon_${dictionary.slug}_width`]: imageData.width,
+                [`favicon_${dictionary.slug}_height`]: imageData.height,
+            });
+        };
+
+        img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon`;
+
+        if (originalDictionaries.filter(dict => dict.slug === dictionary.slug).length === 0) {
+            newDictionary = true;
+        }
+    });
+
+    if (newDictionary) {
+        prepareInitialValues(dictionaries);
+    }
+};
 
 const prepareInitialValues = dictionaries => {
     dictionaries.forEach(dictionary => {
