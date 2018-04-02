@@ -76,34 +76,40 @@ const updateLocalDictionaries = (currentDictionary, originalDictionaries, apiDic
     let newDictionary = false;
 
     dictionaries.forEach(dictionary => {
-        const canvas = document.createElement('canvas');
-        canvas.style.position = 'absolute';
-        canvas.style.top = '-99999999px';
-        const img = new Image();
-        img.onload = function() {
-            const context = canvas.getContext('2d');
-            context.drawImage(this, 0, 0);
-            const imageData = context.getImageData(0, 0, img.width, img.height);
-
-            if (!imageData) {
-                console.error('invalid imageData');
+        chrome.storage.local.get([`favicon_${dictionary.slug}_data`], result => {
+            if (result.hasOwnProperty(`favicon_${dictionary.slug}_data`)) {
                 return;
             }
 
-            loremRocks.icon[dictionary.slug] = {
-                data: imageData.data,
-                width: imageData.width,
-                height: imageData.height,
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'absolute';
+            canvas.style.top = '-99999999px';
+            const img = new Image();
+            img.onload = function() {
+                const context = canvas.getContext('2d');
+                context.drawImage(this, 0, 0);
+                const imageData = context.getImageData(0, 0, img.width, img.height);
+
+                if (!imageData) {
+                    console.error('invalid imageData');
+                    return;
+                }
+
+                loremRocks.icon[dictionary.slug] = {
+                    data: imageData.data,
+                    width: imageData.width,
+                    height: imageData.height,
+                };
+
+                chrome.storage.local.set({
+                    [`favicon_${dictionary.slug}_data`]: JSON.stringify(imageData.data),
+                    [`favicon_${dictionary.slug}_width`]: imageData.width,
+                    [`favicon_${dictionary.slug}_height`]: imageData.height,
+                });
             };
 
-            chrome.storage.local.set({
-                [`favicon_${dictionary.slug}_data`]: JSON.stringify(imageData.data),
-                [`favicon_${dictionary.slug}_width`]: imageData.width,
-                [`favicon_${dictionary.slug}_height`]: imageData.height,
-            });
-        };
-
-        img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon/`;
+            img.src = `https://api.lorem.rocks/dictionaries/${dictionary.slug}/favicon/`;
+        });
 
         if (originalDictionaries.filter(dict => dict.slug === dictionary.slug).length === 0) {
             newDictionary = true;
