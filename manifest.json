@@ -3,7 +3,7 @@
 
   "name": "lorem.rocks Extension",
   "description": "Fills current input with a random generated text taken from lorem.rocks",
-  "version": "0.1.5",
+  "version": "0.1.6",
 
   "browser_action": {
     "default_popup": "popup.html",
